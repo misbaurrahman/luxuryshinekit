@@ -544,11 +544,11 @@
     /* Section Blocks & Reveal */
     .section-block { padding: 36px 0; }
     .reveal {
-      opacity: 0;
-      transform: translateY(18px);
-      transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+      opacity: 1;
+      transform: none;
+      transition: opacity 420ms var(--ease), transform 420ms var(--ease);
     }
-    .reveal.is-visible { opacity: 1; transform: translateY(0); }
+    .reveal.is-visible { opacity: 1; transform: none; }
 
     .section-header-center { text-align: center; margin-bottom: 24px; }
     .section-header-center h2, .section-header-row h2 {
@@ -2956,7 +2956,7 @@
               io.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.08 });
+        }, { threshold: 0.01 });
         reveals.forEach((el) => io.observe(el));
       } else {
         reveals.forEach((el) => el.classList.add("is-visible"));
