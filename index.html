@@ -1781,10 +1781,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // Configure Google Sheets Web App URL + WhatsApp Order Number
+    // Configure Google Sheets Web App URL
     const ORDER_CONFIG = {
-      whatsappNumber: "8801806743758",
-      googleSheetWebhookUrl: "https://script.google.com/macros/s/AKfycbxjbxwKL3L-Mu1v2R_wRo5stikVmkBEnrPGKcepD9qhQF4UhuM53__1SlULr8u3n1J8jw/exec"
+      googleSheetWebhookUrl: "https://script.google.com/macros/s/AKfycbzyAqUm-TMIO2hVjO63guK-iW_cbpUizDJ3BlsXggBX6Xd_k9eEiCinsIjX7TlNnVfbWw/exec"
     };
 
     const IMAGES = {
@@ -2397,9 +2396,9 @@
       if (state.orderConfirmed) {
         const oc = state.orderConfirmed;
         const sheetBadge = oc.sheetStatus === "sent"
-          ? "Saved to Google Sheets"
+          ? "Order recorded in Google Sheets"
           : oc.sheetStatus === "error"
-            ? "Google Sheet unreachable (sent via WhatsApp)"
+            ? "Could not reach Google Sheets — please copy your order details or call 01806-743758"
             : "Google Sheet URL ready to paste in ORDER_CONFIG";
 
         body.innerHTML = `
@@ -2413,15 +2412,11 @@
               Thank you, ${oc.name}. Total payable on delivery: <strong class="mono">${formatBDT(oc.total)}</strong> (${oc.zoneLabel}).
             </p>
             <div style="text-align: left; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: var(--ink-secondary);">
-              <div style="margin-bottom: 6px;"><strong style="color: var(--ink);">Google Sheets:</strong> ${sheetBadge}</div>
-              <div><strong style="color: var(--ink);">WhatsApp:</strong> Pre-filled order message ready for +${ORDER_CONFIG.whatsappNumber}</div>
+              <div><strong style="color: var(--ink);">Order Status:</strong> ${sheetBadge}</div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px;">
-              <a href="${oc.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="width: 100%;">
-                Send Order on WhatsApp
-              </a>
-              <button type="button" class="btn-secondary" id="copyOrderSummaryBtn" style="width: 100%;">Copy Order Details</button>
-              <button type="button" class="btn-ghost-sm" id="continueAfterOrderBtn" style="width: 100%; height: 40px;">Continue Browsing</button>
+              <button type="button" class="btn-primary" id="copyOrderSummaryBtn" style="width: 100%;">Copy Order Details</button>
+              <button type="button" class="btn-secondary" id="continueAfterOrderBtn" style="width: 100%;">Continue Browsing</button>
             </div>
           </div>
         `;
@@ -2493,7 +2488,7 @@
           <div class="summary-row"><span>Items Subtotal</span><span class="mono">${formatBDT(subtotal)}</span></div>
           <div class="summary-row"><span>Delivery (${delivery.label})</span><span class="mono">${formatBDT(delivery.fee)}</span></div>
           <div class="summary-row total"><span>Payable on Delivery</span><span class="mono">${formatBDT(grandTotal)}</span></div>
-          <button type="submit" form="codForm" class="btn-primary" style="width: 100%;">Confirm Order &amp; Send via WhatsApp</button>
+          <button type="submit" form="codForm" class="btn-primary" style="width: 100%;">Confirm Order</button>
         `;
 
         document.getElementById("backToBagBtn").addEventListener("click", () => {
@@ -2569,15 +2564,12 @@
             `Total (COD): ${formatBDT(grandTotal)}`
           ].join("\n");
 
-          const whatsappUrl = `https://wa.me/${ORDER_CONFIG.whatsappNumber}?text=${encodeURIComponent(plainMessage)}`;
-
           state.orderConfirmed = {
             ref,
             name: name.replace(/</g, "&lt;"),
             total: grandTotal,
             zoneLabel: delivery.label,
             sheetStatus,
-            whatsappUrl,
             plainMessage
           };
           state.cart = [];
@@ -2585,10 +2577,6 @@
           saveCart();
           updateBagBadge();
           renderBag();
-
-          try {
-            window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-          } catch (err) {}
         });
         return;
       }
