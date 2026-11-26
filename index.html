@@ -2452,22 +2452,68 @@
           state.deliveryZone = e.target.value;
           renderBag();
         });
-        document.getElementById("codForm").addEventListener("submit", (e) => {
+        const ORDER_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyAqUm-TMIO2hVjO63guK-iW_cbpUizDJ3BlsXggBX6Xd_k9eEiCinsIjX7TlNnVfbWw/exec";
+        document.getElementById("codForm").addEventListener("submit", async (e) => {
           e.preventDefault();
           const name = document.getElementById("custName").value.trim();
           const phone = document.getElementById("custPhone").value.trim();
-          if (!name || !phone) return;
-          state.orderConfirmed = {
-            ref: "LSK-" + Math.floor(100000 + Math.random() * 900000),
-            name: name.replace(/</g, "&lt;"),
-            total: grandTotal,
-            zoneKey: state.deliveryZone
+          const address = document.getElementById("custAddr").value.trim();
+          if (!name || !phone || !address) return;
+
+          const submitBtn = document.querySelector('button[form="codForm"]');
+          const prevText = submitBtn ? submitBtn.textContent : "";
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = state.lang === "en" ? "Submitting order..." : "অর্ডার পাঠানো হচ্ছে...";
+          }
+
+          const orderRef = "LSK-" + Math.floor(100000 + Math.random() * 900000);
+          const itemsDetail = state.cart.map((item) => {
+            const p = PRODUCTS.find((x) => x.id === item.id);
+            return p ? { id: p.id, name: p.name, qty: item.qty, unitPrice: p.price, lineTotal: p.price * item.qty } : null;
+          }).filter(Boolean);
+
+          const orderPayload = {
+            orderRef,
+            timestamp: new Date().toISOString(),
+            customerName: name,
+            phone,
+            deliveryZone: getZoneLabel(state.deliveryZone),
+            address,
+            items: itemsDetail.map((i) => `${i.id} (${i.name}) x${i.qty} = ${i.lineTotal}`).join(" | "),
+            itemsArray: itemsDetail,
+            subtotal,
+            deliveryFee: delivery.fee,
+            grandTotal,
+            language: state.lang,
+            source: "AR Luxury Shine Kit Website"
           };
-          state.cart = [];
-          state.checkoutOpen = false;
-          saveCart();
-          updateBagStats();
-          renderBag();
+
+          try {
+            await fetch(ORDER_WEB_APP_URL, {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(orderPayload)
+            });
+            state.orderConfirmed = {
+              ref: orderRef,
+              name: name.replace(/</g, "&lt;"),
+              total: grandTotal,
+              zoneKey: state.deliveryZone
+            };
+            state.cart = [];
+            state.checkoutOpen = false;
+            saveCart();
+            updateBagStats();
+            renderBag();
+          } catch (err) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = prevText;
+            }
+            showToast(state.lang === "en" ? "Network error. Please try again." : "নেটওয়ার্ক সমস্যা! আবার চেষ্টা করুন।");
+          }
         });
         return;
       }
